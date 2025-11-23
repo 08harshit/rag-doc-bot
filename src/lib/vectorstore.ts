@@ -44,9 +44,14 @@ export async function getVectorStore(): Promise<Chroma> {
  */
 export async function searchDocuments(
     query: string,
-    k: number = config.retrieval.topK
+    k: number = config.retrieval.topK,
+    filter?: Record<string, any>
 ): Promise<Document[]> {
     const vectorStore = await getVectorStore();
-    const retriever = vectorStore.asRetriever({ k });
+    // Chroma supports filtering by metadata
+    const retriever = vectorStore.asRetriever({
+        k,
+        filter: filter // Pass the filter to Chroma
+    });
     return await retriever.invoke(query);
 }

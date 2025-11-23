@@ -9,7 +9,7 @@ import { generateAnswer } from '@/lib/llm';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { question } = body;
+        const { question, document } = body;
 
         // Validate input
         if (!question || typeof question !== 'string') {
@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Generate answer using RAG
-        const answer = await generateAnswer(question);
+        // Generate answer using RAG with optional document filter
+        const answer = await generateAnswer(question, document);
 
         return NextResponse.json({
             success: true,

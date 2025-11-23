@@ -35,11 +35,13 @@ export async function POST(req: NextRequest) {
 
         // Call ingest API to process all documents
         const baseUrl = req.nextUrl.origin;
+        console.log(`🔄 Triggering ingestion at ${baseUrl}/api/ingest...`);
         const ingestRes = await fetch(`${baseUrl}/api/ingest`, {
             method: 'POST',
         });
 
         const ingestData = await ingestRes.json();
+        console.log('✅ Ingestion response:', ingestData.success ? 'Success' : 'Failed');
 
         if (ingestData.success) {
             return NextResponse.json({

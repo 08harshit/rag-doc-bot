@@ -59,7 +59,7 @@ export async function loadDocuments(dirPath: string): Promise<Document[]> {
             documents.push(
                 new Document({
                     pageContent: content,
-                    metadata: { source: filePath, type: fileType },
+                    metadata: { source: file, type: fileType },
                 })
             );
         } catch (error) {

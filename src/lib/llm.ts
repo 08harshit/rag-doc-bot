@@ -22,9 +22,25 @@ Question: {question}
 /**
  * Generate answer using RAG pipeline
  */
-export async function generateAnswer(question: string): Promise<string> {
-    // 1. Retrieve relevant documents
-    const relevantDocs = await searchDocuments(question);
+export async function generateAnswer(question: string, filename?: string): Promise<string> {
+    // 1. Retrieve relevant documents (with filter if provided)
+    const filter = filename ? { source: filename } : undefined;
+
+    console.log(`\n🔍 Searching for: "${question}"`);
+    if (filename) console.log(`📂 Filtering by document: ${filename}`);
+
+    const relevantDocs = await searchDocuments(question, undefined, filter);
+
+    // LOGGING: Show what the AI is actually reading
+    console.log("\n🔍 --- RETRIEVED CONTEXT ---");
+    if (relevantDocs.length === 0) {
+        console.log("⚠️ NO RELEVANT DOCUMENTS FOUND");
+    }
+    relevantDocs.forEach((doc, i) => {
+        console.log(`\n📄 Chunk ${i + 1} (Source: ${doc.metadata.source}):`);
+        console.log(doc.pageContent.slice(0, 150).replace(/\n/g, ' ') + "...");
+    });
+    console.log("----------------------------\n");
 
     // 2. Format context
     const context = relevantDocs

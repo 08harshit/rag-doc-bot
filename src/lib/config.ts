@@ -28,7 +28,7 @@ export const config = {
     },
     chroma: {
         url: process.env.CHROMA_URL || 'http://localhost:8000',
-        collectionName: 'rag_docs_collection',
+        collectionName: 'rag_docs_v2', // Changed to force fresh start
     },
     chunking: {
         // Traditional character-based chunking (fallback)
