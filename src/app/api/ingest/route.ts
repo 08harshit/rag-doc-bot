@@ -9,12 +9,14 @@ import * as path from 'path';
 import { loadDocuments } from '@/lib/document-loader';
 import { createVectorStore } from '@/lib/vectorstore';
 import { config } from '@/lib/config';
+import { createSemanticChunks } from '@/lib/semantic-chunker';
 
 export async function POST(req: NextRequest) {
     try {
         const docsDir = path.join(process.cwd(), 'docs');
 
         // 1. Load documents
+        console.log('📂 Loading documents from:', docsDir);
         const rawDocs = await loadDocuments(docsDir);
 
         if (rawDocs.length === 0) {
@@ -24,14 +26,47 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        console.log(`✅ Loaded ${rawDocs.length} documents`);
+
         // 2. Split documents into chunks
-        const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize: config.chunking.chunkSize,
-            chunkOverlap: config.chunking.chunkOverlap,
-        });
-        const splitDocs = await splitter.splitDocuments(rawDocs);
+        let splitDocs;
+        let chunkingMethod: string;
+
+        if (config.chunking.useSemantic) {
+            // Use AI-powered semantic chunking
+            console.log('🧠 Using semantic chunking (AI-powered)');
+            try {
+                splitDocs = await createSemanticChunks(rawDocs, {
+                    minChunkSize: config.chunking.semantic.minChunkSize,
+                    maxChunkSize: config.chunking.semantic.maxChunkSize,
+                    similarityThreshold: config.chunking.semantic.similarityThreshold,
+                });
+                chunkingMethod = 'semantic';
+            } catch (error) {
+                console.error('⚠️  Semantic chunking failed, falling back to character-based');
+                // Fallback to traditional chunking
+                const splitter = new RecursiveCharacterTextSplitter({
+                    chunkSize: config.chunking.chunkSize,
+                    chunkOverlap: config.chunking.chunkOverlap,
+                });
+                splitDocs = await splitter.splitDocuments(rawDocs);
+                chunkingMethod = 'character-based (fallback)';
+            }
+        } else {
+            // Use traditional character-based chunking
+            console.log('📏 Using character-based chunking');
+            const splitter = new RecursiveCharacterTextSplitter({
+                chunkSize: config.chunking.chunkSize,
+                chunkOverlap: config.chunking.chunkOverlap,
+            });
+            splitDocs = await splitter.splitDocuments(rawDocs);
+            chunkingMethod = 'character-based';
+        }
+
+        console.log(`✂️  Created ${splitDocs.length} chunks using ${chunkingMethod}`);
 
         // 3. Create vector store and index documents
+        console.log('💾 Indexing chunks in ChromaDB...');
         const result = await createVectorStore(splitDocs);
 
         return NextResponse.json({
@@ -40,6 +75,10 @@ export async function POST(req: NextRequest) {
             stats: {
                 documentsProcessed: rawDocs.length,
                 chunksCreated: result.chunkCount,
+                chunkingMethod: chunkingMethod,
+                avgChunkSize: Math.round(
+                    splitDocs.reduce((sum, doc) => sum + doc.pageContent.length, 0) / splitDocs.length
+                ),
             },
         });
 

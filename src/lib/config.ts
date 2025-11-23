@@ -31,8 +31,19 @@ export const config = {
         collectionName: 'rag_docs_collection',
     },
     chunking: {
+        // Traditional character-based chunking (fallback)
         chunkSize: 1000,
         chunkOverlap: 200,
+
+        // Semantic chunking options
+        useSemantic: true, // Set to true to enable AI-powered semantic chunking
+        semantic: {
+            minChunkSize: 200,    // Minimum characters per chunk
+            maxChunkSize: 1000,   // Maximum characters per chunk
+            similarityThreshold: 0.75, // Similarity score to determine breaks (0-1)
+            // Higher = fewer chunks (only break at major topic shifts)
+            // Lower = more chunks (break at subtle topic changes)
+        },
     },
     retrieval: {
         topK: 4,
