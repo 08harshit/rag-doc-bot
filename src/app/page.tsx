@@ -6,6 +6,8 @@ export default function Home() {
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,6 +36,38 @@ export default function Home() {
         }
     };
 
+    const handleFileUpload = async (file: File) => {
+        setUploading(true);
+        setUploadStatus('');
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setUploadStatus(`✅ ${data.message} (${data.stats.chunksCreated} chunks)`);
+            } else {
+                setUploadStatus(`❌ ${data.error}`);
+            }
+        } catch (err) {
+            setUploadStatus('❌ Upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileUpload(file);
+    };
+
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
             <div className="max-w-2xl mx-auto">
@@ -41,6 +75,36 @@ export default function Home() {
                     RAG Doc Bot
                 </h1>
 
+                {/* Upload Section */}
+                <div
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    className="mb-8 p-8 border-2 border-dashed border-gray-700 rounded-lg bg-gray-800 hover:border-blue-500 transition-colors"
+                >
+                    <div className="text-center">
+                        <p className="mb-4 text-gray-400">📄 Upload PDF or TXT document</p>
+                        <input
+                            type="file"
+                            accept=".pdf,.txt"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                            className="hidden"
+                            id="file-upload"
+                            disabled={uploading}
+                        />
+                        <label
+                            htmlFor="file-upload"
+                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold cursor-pointer inline-block transition-colors"
+                        >
+                            {uploading ? 'Uploading...' : 'Choose File'}
+                        </label>
+                        <p className="mt-2 text-sm text-gray-500">or drag and drop here</p>
+                    </div>
+                    {uploadStatus && (
+                        <p className="mt-4 text-center text-sm">{uploadStatus}</p>
+                    )}
+                </div>
+
+                {/* Question Section */}
                 <form onSubmit={handleSubmit} className="mb-8">
                     <div className="flex gap-4">
                         <input
@@ -60,6 +124,7 @@ export default function Home() {
                     </div>
                 </form>
 
+                {/* Answer Section */}
                 {answer && (
                     <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-xl">
                         <h2 className="text-xl font-semibold mb-4 text-blue-400">Answer:</h2>
