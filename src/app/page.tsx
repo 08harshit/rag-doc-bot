@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -14,6 +14,15 @@ export default function Home() {
     const [uploading, setUploading] = useState(false);
     const [uploadStatus, setUploadStatus] = useState('');
     const [activeDocument, setActiveDocument] = useState<string | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, loading]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -162,7 +171,7 @@ export default function Home() {
                     {/* Right Column - Chat */}
                     <div className="lg:col-span-2 flex flex-col">
                         {/* Messages */}
-                        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl mb-4 flex-1 min-h-[500px] max-h-[600px] overflow-y-auto">
+                        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl mb-4 flex-1 min-h-[500px] max-h-[600px] overflow-y-auto custom-scrollbar">
                             {messages.length === 0 ? (
                                 <div className="h-full flex items-center justify-center text-gray-500">
                                     <div className="text-center">
@@ -184,8 +193,8 @@ export default function Home() {
                                         >
                                             <div
                                                 className={`max-w-[80%] rounded-2xl px-5 py-3 ${msg.role === 'user'
-                                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                                                        : 'bg-white/10 backdrop-blur-sm border border-white/10 text-gray-100'
+                                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                                                    : 'bg-white/10 backdrop-blur-sm border border-white/10 text-gray-100'
                                                     }`}
                                             >
                                                 <div className="text-xs font-semibold mb-1 opacity-70">
@@ -206,6 +215,7 @@ export default function Home() {
                                             </div>
                                         </div>
                                     )}
+                                    <div ref={messagesEndRef} />
                                 </div>
                             )}
                         </div>
