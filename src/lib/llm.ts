@@ -11,7 +11,7 @@ import { Document } from '@langchain/core/documents';
 import { config } from './config';
 import { searchDocuments } from './vectorstore';
 
-const SYSTEM_PROMPT = `You are a helpful assistant. Answer the question based only on the following context. If the answer is not in the context, say "I don't know based on the provided documents."
+const SYSTEM_PROMPT = `You are a helpful assistant. Answer the question based on the following context. If the answer is not in the context, or if the question requires general knowledge (like comparisons), use your own knowledge to answer.
 
 Context:
 {context}
